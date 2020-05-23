@@ -43,7 +43,7 @@ def on_release(key):
     if key.char == "i":
       channelInv = not channelInv;
       updateChannel = True
-    if key.char == "a":
+    if key.char == "u":
       channelDc = not channelDc;
       updateChannel = True
     if key.char == "y":
@@ -62,6 +62,17 @@ def on_release(key):
       HAMEG_HM1507.CH_DC if channelDc else HAMEG_HM1507.CH_AC,
       HAMEG_HM1507.V_DIVS[channelDivIndex])
   
+print("q/ESC - end")
+print("c - connect")
+print("d - disconnect")
+print("a - autoset")
+print("s - time base single")
+print("o - time base +")
+print("p - time base -")
+print("i - channel inv")
+print("u - channel dc/ac")
+print("y - channel voltage +")
+print("x - channel voltage -")
 
 with Listener(on_release=on_release) as listener:
   listener.join()
