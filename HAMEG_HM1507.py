@@ -1,9 +1,8 @@
 import serial
 import time
+import logging
 
 class HAMEG_HM1507:
-  CH_AC = 0
-  CH_DC = 1
   TIME_DIVS = [
     "50ns",
     "100ns",
@@ -53,34 +52,38 @@ class HAMEG_HM1507:
   ]
 
 
-  def __init__(self, port, autoConect=True):
-    self._ser = serial.Serial(port=port, baudrate=19200, timeout=1,
-                              rtscts=True, stopbits=serial.STOPBITS_TWO,
-                              parity=serial.PARITY_NONE)
-    self._connected = False
-    if autoConect:
-      self.connect()
+  def __init__(self):
+    self._ser = None
+    self._logger = logging.getLogger("HAMEG_HM1507")
     
   def __del__(self):
     self.disconnect()
-    self._ser.close()
+
+  def connect(self, port):
+    self.disconnect()
+    self._logger.info("connecting")
+    self._ser = serial.Serial(port=port, baudrate=19200, timeout=1,
+                              rtscts=True, stopbits=serial.STOPBITS_TWO,
+                              parity=serial.PARITY_NONE)
+    self._command(" ")
+
+  def disconnect(self):
+    if self._ser is not None:
+      self._logger.info("disconnecing")
+      self._command("rm0")
+      self._ser.close()
+      self._ser = None
 
   def _command(self, command):
-    for ch in command:
-      self._ser.write(ch.encode("utf-8"))
-    self._ser.write(b"\r")
-    # print(ser.readline())
+    self._logger.debug("sending command: "+command)
+    if self._ser is not None:
+      for ch in command:
+        self._ser.write(ch.encode("utf-8"))
+      self._ser.write(b"\r")
+      # print(ser.readline())
+    else:
+      self._logger.warning("Not connected!")
   
-  def connect(self):
-    if not self._connected:
-      self._command(" ")
-      self._connected = True
-  
-  def disconnect(self):
-    if self._connected:
-      self._command("rm0")
-      self._connected = False
-
   def autoset(self):
     self._command("AUTOSET")
   
@@ -96,16 +99,14 @@ class HAMEG_HM1507:
     
     self._command("TB"+str(base)+"="+chr(settings))
   
-  def channel(self, channel, inv, mode, vDiv):
+  def channel(self, channel, inv, modeDc, vDiv):
     if (channel is not 1) and (channel is not 2):
       raise IndexError("Only channel 1 and 2 exist")
     settings = 16
     if inv:
       settings += 32
-    if mode is self.CH_AC:
+    if not modeDc:
       settings += 64
-    elif mode is not self.CH_DC:
-      raise IndexError("Channel modes only AC and DC")
     if vDiv not in self.V_DIVS:
       raise IndexError("Unknown vDiv!")
     settings += self.V_DIVS.index(vDiv)

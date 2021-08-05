@@ -1,6 +1,6 @@
 from HAMEG_HM1507 import *
 
-h = HAMEG_HM1507("COM7", False)
+h = HAMEG_HM1507()
 # h.timeBase("A", False, "2ms");
 # h.channel(1, False, HAMEG_HM1507.CH_DC, "100mV")
 
@@ -24,7 +24,7 @@ def on_release(key):
     if key.char == "q":
       return False
     if key.char == "c":
-      h.connect()
+      h.connect("COM7")
       updateTime = True
       updateChannel = True
     if key.char == "d":
@@ -58,9 +58,7 @@ def on_release(key):
   if updateTime:
     h.timeBase("A", timeBaseSingle, HAMEG_HM1507.TIME_DIVS[timeBaseDivIndex])
   if updateChannel:
-    h.channel(1, channelInv,
-      HAMEG_HM1507.CH_DC if channelDc else HAMEG_HM1507.CH_AC,
-      HAMEG_HM1507.V_DIVS[channelDivIndex])
+    h.channel(1, channelInv, channelDc, HAMEG_HM1507.V_DIVS[channelDivIndex])
   
 print("q/ESC - end")
 print("c - connect")
