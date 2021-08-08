@@ -1,13 +1,16 @@
 import logging
 import tkinter as tk
+import serial.tools.list_ports;
 import HAMEG_HM1507 as HM
 
 class Gui:
 
   def __init__(self):
     r = tk.Tk()
+    r.title("HAMEG HM1507 Control Panel")
   
-    self._port = tk.StringVar(r, "COM7")
+    self._port = tk.StringVar(r)
+    self._port.set("(N/A)")
     self._h = HM.HAMEG_HM1507()
     self._channels = {
       1: {
@@ -34,7 +37,9 @@ class Gui:
     
     f = tk.Frame(r)
     tk.Label(f, text="Port:").pack(side=tk.LEFT)
-    tk.Entry(f, textvariable=self._port).pack(side=tk.LEFT)
+    self._port_list = tk.OptionMenu(f, self._port, [self._port.get()])
+    self._port_list.pack(side=tk.LEFT)
+    tk.Button(f, text="Refresh list", command=self._btn_refresh_port_list).pack(side=tk.LEFT)
     tk.Button(f, text="Connect", command=self._btn_connect).pack(side=tk.LEFT)
     tk.Button(f, text="Disconnect", command=self._btn_disconnect).pack(side=tk.LEFT)
     f.pack(side=tk.TOP)
@@ -74,9 +79,20 @@ class Gui:
     f.pack(side=tk.TOP)
     
     self._root = r
+    self._btn_refresh_port_list()
     
   def run(self):
     self._root.mainloop()
+  
+  def _btn_refresh_port_list(self):
+    available_ports = [comport.device for comport in serial.tools.list_ports.comports()]
+    
+    self._port_list['menu'].delete(0, 'end')
+    for port in available_ports:
+      self._port_list['menu'].add_command(label=port, command=tk._setit(self._port, port))
+    
+    if self._port.get() not in available_ports:
+      self._port.set(available_ports[0])
   
   def _btn_connect(self):
     self._h.connect(self._port.get())
